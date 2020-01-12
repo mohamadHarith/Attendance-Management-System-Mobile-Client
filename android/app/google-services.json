@@ -1,0 +1,69 @@
+{
+  "project_info": {
+    "project_number": "90439065085",
+    "firebase_url": "https://mmu-cyberjaya-attendance.firebaseio.com",
+    "project_id": "mmu-cyberjaya-attendance",
+    "storage_bucket": "mmu-cyberjaya-attendance.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:90439065085:android:92c9e5d65d5f8b28020d94",
+        "android_client_info": {
+          "package_name": "com.attendancemanagementsystemmobileclient"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "90439065085-0in1ar7fv7u78och4gkuddti0soa04qg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAABE83AxBu2b7EEIlyzCu1hF4KKmdepFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "90439065085-0in1ar7fv7u78och4gkuddti0soa04qg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:90439065085:android:9db35c403a706270020d94",
+        "android_client_info": {
+          "package_name": "com.rncamera"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "90439065085-0in1ar7fv7u78och4gkuddti0soa04qg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAABE83AxBu2b7EEIlyzCu1hF4KKmdepFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "90439065085-0in1ar7fv7u78och4gkuddti0soa04qg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
