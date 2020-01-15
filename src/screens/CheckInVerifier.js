@@ -89,6 +89,7 @@ class CheckInVerifier extends React.Component{
                 headers: {'Content-Type':'application/json'},
                 body: JSON.stringify({
                     studentID: this.state.studentID,
+                    classID: this.state.classSession.Class_ID,
                     classSessionID: this.state.classSession.Class_Session_ID,
                     attendanceStatus: "Present"
                 })

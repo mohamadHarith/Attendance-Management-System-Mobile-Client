@@ -97,7 +97,11 @@ class ScanBeacon extends React.Component{
        }).then((res)=>{
            if(res.status == 200){
                res.json().then((data)=>{
-                    this.setState({UUID: data[0].UUID})
+                console.log('from scan beacon', data[0].UUID);
+                    
+                this.setState({UUID: data[0].UUID}, ()=>{
+                    this.initScan();
+                })
                });
            }
            else{
@@ -115,13 +119,8 @@ class ScanBeacon extends React.Component{
        })
    }
 
-    async componentDidMount(){
-        
-        
-        
-
-        await this.getBeaconID();
-        
+   initScan = async()=>{
+            
         let isBluetoothEnabled = false;
         let isLocationEnabled = false;
         
@@ -139,13 +138,16 @@ class ScanBeacon extends React.Component{
                     this.props.handleScanBeacon(false);
                 }
             }, 3000);
-                     
-                   
+                    
+                
         }
         else{
             console.log('yep its working 2');
         }
+   }
 
+    componentDidMount(){
+        this.getBeaconID();
     }
 
     render(){
