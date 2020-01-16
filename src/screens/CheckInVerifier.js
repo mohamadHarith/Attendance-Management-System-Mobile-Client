@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     classSession:{
-        width:'90%'
+        width:'97%'
     },
     cardBody:{
         paddingTop:0,

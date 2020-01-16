@@ -1,6 +1,7 @@
 import React from 'react';
 import {StyleSheet, TouchableNativeFeedback, View, FlatList, ToastAndroid} from 'react-native';
 import {Container, Header, Body, Title, Left, Right, Text, Icon, Card, CardItem, Button, Subtitle} from 'native-base';
+import LoadingIndicator from '../components/LoadingIndicator'
 import {themeColor} from '../colorConstants';
 import {url} from '../server';
 
@@ -12,7 +13,8 @@ class UpcomingClasseSesisons extends React.Component{
             studentID: this.props.navigation.dangerouslyGetParent().dangerouslyGetParent().getParam('studentID'),
             weekData:{},
             upcomingClassSessions: [],
-            flatListRefresh: false
+            flatListRefresh: false,
+            isDataLoaded:false
         }
     }
 
@@ -32,7 +34,8 @@ class UpcomingClasseSesisons extends React.Component{
                     this.setState({
                         upcomingClassSessions: data.upcomingClassSessions, 
                         weekData: data.weekData,
-                        flatListRefresh:false
+                        flatListRefresh:false,
+                        isDataLoaded: true
                     });
                 })
             }
@@ -89,7 +92,8 @@ class UpcomingClasseSesisons extends React.Component{
                <View style={styles.mainContainer}>
 
                     <View style={styles.upcomingClassSessionList}>
-                        <FlatList
+                        {this.state.isDataLoaded?(
+                            <FlatList
                             ListHeaderComponent = {()=>{
                                 return( 
                                 <View style={styles.trimesterDetails}>
@@ -137,6 +141,9 @@ class UpcomingClasseSesisons extends React.Component{
                             }}
                             keyExtractor={item => toString(item.Class_Session_ID)}
                         />
+                        ):(
+                            <LoadingIndicator/>
+                        )}
                     </View>
                </View>
             </Container>

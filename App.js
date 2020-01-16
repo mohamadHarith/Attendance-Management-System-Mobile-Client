@@ -7,9 +7,8 @@ import LogIn from './src/screens/Login';
 import EnrolFace from './src/screens/EnrolFace';
 import UpcomingClassSessions from './src/screens/UpcomingClassSessions';
 import ClassSchedule from './src/screens/ClassSchedule';
-import AttendancePercentage from './src/screens/AttendancePercentage'
-import ScanBeacon from './src/screens/ScanBeacon';
-import ScanFace from './src/screens/ScanFace';
+import AttendancePercentage from './src/screens/AttendancePercentage';
+import AttendanceDetails from './src/screens/AttendanceDetails';
 import SideBar from './src/components/SideBar';
 import { createStackNavigator } from 'react-navigation-stack';
 
@@ -23,11 +22,19 @@ import { createStackNavigator } from 'react-navigation-stack';
 // }
 // );
 
+const AttendancePercentageStackNavigator = createStackNavigator({
+  attendanceOverview: AttendancePercentage,
+  attendanceDetails: AttendanceDetails
+},{
+  initialRouteName:'attendanceOverview',
+  headerMode:'none'  
+});
+
 const MainStackNavigator = createStackNavigator({
   upcomingClassSessions: UpcomingClassSessions,
   checkIn: CheckInVerifier,
   classSchedule: ClassSchedule,
-  attendancePercentage: AttendancePercentage
+  attendancePercentage: AttendancePercentageStackNavigator
 },{
   initialRouteName:'upcomingClassSessions',
   headerMode:'none'  
