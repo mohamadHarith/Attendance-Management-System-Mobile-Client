@@ -4,6 +4,7 @@ import { Container, Header, Body, Title, Button, Text, Icon} from 'native-base';
 import EnrolFaceModal from '../components/EnrolFaceModal';
 import LoadingIndicator from '../components/LoadingIndicator';
 import {themeColor} from '../colorConstants';
+import AsyncStorage from '@react-native-community/async-storage';
 import {url} from '../server';
 
 export default class EnrolFace extends Component {
@@ -18,12 +19,16 @@ export default class EnrolFace extends Component {
       picture03uri: '',
       isThreePictures: false,
       isLoading: false,
-      studentID: '1151101633'
+      studentID: ''
     }
   }
 
   setModalVisible = (id)=>{
-    this.setState({showModal:true, clickedPictureID:id});
+    //this.setState({showModal:true, clickedPictureID:id});
+    this.props.navigation.navigate('enrolFaceModal', {
+      id:id,
+      setUri: this.setUri
+    })
   }
 
   handleModalClose=()=>{
@@ -84,19 +89,15 @@ export default class EnrolFace extends Component {
           }
           else{
             this.setState({isLoading:false});
-            ToastAndroid.showWithGravityAndOffset(
-              'Something went wrong. Please try again.',
-              ToastAndroid.LONG,
-              ToastAndroid.BOTTOM,
-              25,
-              50,
-            );
+            throw new Error('Could not enrol face');
+            
           }
       })
       .catch((error)=>{
         this.setState({isLoading:false});
-            ToastAndroid.showWithGravityAndOffset(
-              'Something went wrong. Please try again.',
+        console.log(error);
+        ToastAndroid.showWithGravityAndOffset(
+              error.message,
               ToastAndroid.LONG,
               ToastAndroid.BOTTOM,
               25,
@@ -106,7 +107,14 @@ export default class EnrolFace extends Component {
     }
   }
 
+  async componentDidMount(){
+    const studentID = await AsyncStorage.getItem('studentID');
+    this.setState({studentID: studentID})
+  }
+
   render() {
+    console.log(this.state);
+    
     if(!this.state.isLoading){
       return (
         <Container style={styles.main}>
@@ -158,7 +166,7 @@ export default class EnrolFace extends Component {
               </View>
           </View>
 
-        <EnrolFaceModal visible={this.state.showModal} id={this.state.clickedPictureID} hide={this.handleModalClose} setUri={this.setUri}></EnrolFaceModal>
+        {/* <EnrolFaceModal visible={this.state.showModal} id={this.state.clickedPictureID} hide={this.handleModalClose} setUri={this.setUri}></EnrolFaceModal> */}
         </Container>
       );
     }

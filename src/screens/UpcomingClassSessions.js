@@ -40,7 +40,7 @@ class UpcomingClasseSesisons extends React.Component{
                 })
             }
             else{
-                this.setState({flatListRefresh:false, upcomingClassSessions:[]});
+                this.setState({flatListRefresh:false, upcomingClassSessions:[], isDataLoaded:true});
                 ToastAndroid.showWithGravityAndOffset(
                     'No class sessions found. Pull to refresh.',
                     ToastAndroid.LONG,
@@ -51,9 +51,9 @@ class UpcomingClasseSesisons extends React.Component{
             }
         })
         .catch((error)=>{
-            this.setState({flatListRefresh:false, upcomingClassSessions:[]});
+            this.setState({flatListRefresh:false, upcomingClassSessions:[], isDataLoaded:true});
             ToastAndroid.showWithGravityAndOffset(
-                'Something went wrong. Pull to refresh.',
+                error.message,
                 ToastAndroid.LONG,
                 ToastAndroid.BOTTOM,
                 25,

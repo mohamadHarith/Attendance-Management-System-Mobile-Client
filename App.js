@@ -5,6 +5,7 @@ import UserAuthencticator from './src/screens/UserAuthenticator'
 import CheckInVerifier from './src/screens/CheckInVerifier'
 import LogIn from './src/screens/Login';
 import EnrolFace from './src/screens/EnrolFace';
+import EnrolFaceModal from './src/components/EnrolFaceModal'
 import UpcomingClassSessions from './src/screens/UpcomingClassSessions';
 import ClassSchedule from './src/screens/ClassSchedule';
 import AttendancePercentage from './src/screens/AttendancePercentage';
@@ -47,12 +48,21 @@ const mainDrawerNavigator = createDrawerNavigator({
   contentComponent: SideBar
 });
 
+const EnrolFaceStackNavigator = createStackNavigator({
+  enrolFace: EnrolFace,
+  enrolFaceModal: EnrolFaceModal
+},
+{
+  initialRouteName:'enrolFace',
+  headerMode:'none'  
+});
+
 
 //switch navigator for authentication flow
 const App =  createSwitchNavigator({
   authUser: UserAuthencticator,
   logIn: LogIn,
-  enrolFace: EnrolFace,
+  enrolFace: EnrolFaceStackNavigator,
   main: mainDrawerNavigator
 });
 

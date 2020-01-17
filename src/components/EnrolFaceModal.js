@@ -18,7 +18,7 @@ class EnrolFaceModal extends React.Component {
         super(props);
         this.state= {
             visible: false,
-            id: 0,
+            id: this.props.navigation.getParam('id'),
             isSingleFaceDetected: false,
             isPictureTaken: false,
             boundingBox: {},
@@ -27,15 +27,16 @@ class EnrolFaceModal extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps){
-        if(this.props.visible != prevProps.visible){
-            this.setState({visible: this.props.visible, id:this.props.id, isSingleFaceDetected:false, isPictureTaken:false});
-        }
-    }
+    // componentDidUpdate(prevProps){
+    //     if(this.props.visible != prevProps.visible){
+    //         this.setState({visible: this.props.visible, id:this.props.id, isSingleFaceDetected:false, isPictureTaken:false});
+    //     }
+    // }
 
     handleClose=()=>{
-        const handleModalClose = this.props.hide;
-        handleModalClose();
+        // const handleModalClose = this.props.hide;
+        // handleModalClose();
+        this.props.navigation.navigate('enrolFace');
     }
 
     handleFaceDetection = async (data)=>{
@@ -72,9 +73,11 @@ class EnrolFaceModal extends React.Component {
                               const options = { quality: 1, base64: true, pauseAfterCapture: true, width: 600, mirrorImage: true};
                               const data = await this.camera.takePictureAsync(options);
                               //console.log('Cache path: ', data.uri); 
-                              const setUri = this.props.setUri;
-                              setUri(this.state.id, data.uri);  
-                              this.handleClose();    
+                            //   const setUri = this.props.setUri;
+                            //   setUri(this.state.id, data.uri);  
+                              //this.handleClose();  
+                              this.props.navigation.state.params.setUri(this.state.id, data.uri);  
+                              this.handleClose();  
                             });
                           }
                 }
@@ -91,20 +94,6 @@ class EnrolFaceModal extends React.Component {
         } 
       }
 
-    //   takePicture = () => {
-    //     if (this.camera) {
-    //       if(!this.state.isPictureTaken && this.state.isSingleFaceDetected && this.state.isFaceAligned){
-    //         this.setState({isPictureTaken:true, progressIndicator:instructions[4]}, async ()=>{
-    //           const options = { quality: 1, base64: true, pauseAfterCapture: true, width: 600, mirrorImage: true};
-    //           const data = await this.camera.takePictureAsync(options);
-    //           //console.log('Cache path: ', data.uri); 
-    //           const setUri = this.props.setUri;
-    //           setUri(this.state.id, data.uri);  
-    //           this.handleClose();    
-    //         });
-    //       }
-    //     }
-    //   }
 
     render(){
         let instruction;
@@ -121,7 +110,7 @@ class EnrolFaceModal extends React.Component {
         }
 
         return(
-            <Modal visible={this.state.visible} animationType={'slide'}>
+            
                 <View style={styles.mainContainer}>
                    <TouchableWithoutFeedback onPress={()=>{this.handleClose()}}>
                         <View style={styles.closeModal}>
@@ -188,7 +177,7 @@ class EnrolFaceModal extends React.Component {
                         </Text>
                     </View>
                 </View>
-            </Modal>
+         
         );
     }
 }

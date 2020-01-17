@@ -15,26 +15,67 @@ import {
 
 import {StyleSheet,
   View,
-  
+  ToastAndroid
 } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
+import {url} from '../server';
 
 
 class Login extends React.Component {
   
   constructor(props){
     super(props);
+    this.state = {
+      studentID: '',
+      password: ''
+    }
   }
 
   handleLogin = ()=>{
     // fetch('http://192.168.1.3:5000/')
     // .then(response=>console.log(response))
     // .catch(err=>console.log(err));
-    this.props.navigation.navigate('main');
+    //this.props.navigation.navigate('main');
     //this.props.navigation.navigate('authUser');
+
+    fetch(`${url}/students/authStudent`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        studentID: this.state.studentID,
+        password: this.state.password
+      })
+    }).then((res)=>{
+      if(res.status == 200){
+        res.json().then(async (data)=>{
+          await AsyncStorage.setItem('studentID', data[0].Student_ID);
+          await AsyncStorage.setItem('studentName', data[0].Student_Name);
+          this.props.navigation.navigate('authUser');
+        });
+      }
+      else{
+        throw new Error('Invalid user');
+      }
+    }).catch((error)=>{
+      ToastAndroid.showWithGravityAndOffset(
+       error.message,
+        ToastAndroid.LONG,
+        ToastAndroid.BOTTOM,
+        25,
+        50,
+      );
+    })
+  }
+
+ async componentDidMount(){
+    await AsyncStorage.removeItem('studentID');
+    await AsyncStorage.removeItem('studentName');
   }
   
   render(){
-  return(
+    console.log(this.state);
+    
+    return(
     <Container>
         <Header androidStatusBarColor="#D9220E" style={styles.header}>
           <Body>
@@ -46,11 +87,15 @@ class Login extends React.Component {
           <Form>
               <Item floatingLabel>
                 <Label>Student ID</Label>
-                <Input selectionColor={'#D9220E'} keyboardType='number-pad' returnKeyType='next'/>
+                <Input selectionColor={'#D9220E'} keyboardType='number-pad' returnKeyType='next' onChangeText={(text)=>{
+                  this.setState({studentID: text})
+                }}/>
               </Item>
                <Item floatingLabel>
                 <Label>Password</Label>
-                <Input secureTextEntry={true} selectionColor = {'#D9220E'} returnKeyType='done' />
+                <Input secureTextEntry={true} selectionColor = {'#D9220E'} returnKeyType='done' onChangeText={(text)=>{
+                  this.setState({password:text})
+                }}/>
               </Item>
               <View style={styles.buttonContainer}>
                   <Button style={styles.button} onPress={()=>{this.handleLogin()}}>

@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, ScrollView} from 'react-native';
+import {StyleSheet, View, ScrollView, ToastAndroid} from 'react-native';
 import { 
     Container, 
     Header, Left, Body, Right, Button, Icon, Title, 
@@ -7,13 +7,38 @@ import {
     Card, CardItem
 } from 'native-base';
 import {themeColor} from '../colorConstants';
+import {url} from '../server';
+import LoadingIndicator from '../components/LoadingIndicator';
 
 class ClassSchedule extends React.Component{
     constructor(props){
         super(props);
         this.state={
-
+            classData : [],
+            isDataLoaded: false
         }
+    }
+
+    componentDidMount(){
+        fetch(`${url}/students//getCurrentWeekSchedule/1151101633`).then((res)=>{
+            if(res.status == 200){
+                res.json().then((data)=>{
+                    this.setState({classData:data, isDataLoaded:true});
+                });
+            }
+            else{
+                throw new Error('Could not get schedule')
+            }
+        }).catch((error)=>{
+           this.setState({isDataLoaded:true});
+            ToastAndroid.showWithGravityAndOffset(
+                error.message,
+                ToastAndroid.LONG,
+                ToastAndroid.BOTTOM,
+                25,
+                50,
+              );
+        })
     }
 
     render(){
@@ -30,76 +55,37 @@ class ClassSchedule extends React.Component{
                     </Body>
                     <Right></Right>
                 </Header>
-                <Tabs renderTabBar={()=><ScrollableTab/>}>
-                    <Tab heading="Monday">
-                        <View style={styles.mainContainer}>
-                            <ScrollView style={styles.scheduleContainer}>
-                                <Card>
-                                    <CardItem>
-                                        <Text style={{fontSize:18, fontWeight: 'bold'}}>TCP2451 PROG. LANG. TRANS.</Text>
-                                    </CardItem>
-                                    <CardItem style={styles.cardBody}>
-                                        <Text style={{color:'grey'}}>Lecture - TC01</Text>
-                                        <Text style={{color:'grey'}}>12:00PM - 02:00PM</Text>
-                                        <Text style={{color:'grey'}}>FCI Building CQCR2002</Text>                                      
-                                    </CardItem>
-                                </Card>
-                                <Card>
-                                    <CardItem>
-                                        <Text style={{fontSize:18, fontWeight: 'bold'}}>TCP2451 PROG. LANG. TRANS.</Text>
-                                    </CardItem>
-                                    <CardItem style={styles.cardBody}>
-                                        <Text style={{color:'grey'}}>Lecture - TC01</Text>
-                                        <Text style={{color:'grey'}}>12:00PM - 02:00PM</Text>
-                                        <Text style={{color:'grey'}}>FCI Building CQCR2002</Text>                                      
-                                    </CardItem>
-                                </Card>
-                                <Card>
-                                    <CardItem>
-                                        <Text style={{fontSize:18, fontWeight: 'bold'}}>TCP2451 PROG. LANG. TRANS.</Text>
-                                    </CardItem>
-                                    <CardItem style={styles.cardBody}>
-                                        <Text style={{color:'grey'}}>Lecture - TC01</Text>
-                                        <Text style={{color:'grey'}}>12:00PM - 02:00PM</Text>
-                                        <Text style={{color:'grey'}}>FCI Building CQCR2002</Text>                                      
-                                    </CardItem>
-                                </Card>
-                                <Card>
-                                    <CardItem>
-                                        <Text style={{fontSize:18, fontWeight: 'bold'}}>TCP2451 PROG. LANG. TRANS.</Text>
-                                    </CardItem>
-                                    <CardItem style={styles.cardBody}>
-                                        <Text style={{color:'grey'}}>Lecture - TC01</Text>
-                                        <Text style={{color:'grey'}}>12:00PM - 02:00PM</Text>
-                                        <Text style={{color:'grey'}}>FCI Building CQCR2002</Text>                                      
-                                    </CardItem>
-                                </Card>
-                                <Card>
-                                    <CardItem>
-                                        <Text style={{fontSize:18, fontWeight: 'bold'}}>TCP2451 PROG. LANG. TRANS.</Text>
-                                    </CardItem>
-                                    <CardItem style={styles.cardBody}>
-                                        <Text style={{color:'grey'}}>Lecture - TC01</Text>
-                                        <Text style={{color:'grey'}}>12:00PM - 02:00PM</Text>
-                                        <Text style={{color:'grey'}}>FCI Building CQCR2002</Text>                                      
-                                    </CardItem>
-                                </Card>
-                            </ScrollView>
-                        </View>
-                    </Tab>
-                    <Tab heading="Tuesday">
-                        <></>
-                    </Tab>
-                    <Tab heading="Wednesday">
-                        <></>
-                    </Tab>
-                    <Tab heading="Thursday">
-                        <></>
-                    </Tab>
-                    <Tab heading="Friday">
-                        <></>
-                    </Tab>
+                {this.state.isDataLoaded?(
+                    <Tabs renderTabBar={()=><ScrollableTab/>}>
+                        {this.state.classData.map((item,index)=>{
+                            return (
+                                <Tab heading={item.name} key={index}>
+                                    <View style={styles.mainContainer}>
+                                        <ScrollView style={styles.scheduleContainer}>
+                                            {item.classes.map((classItem, index)=>{
+                                                return(
+                                                    <Card key={index}>
+                                                        <CardItem>
+                                                            <Text style={{fontSize:18, fontWeight: 'bold'}}>{`${classItem.Subject_ID} ${classItem.Subject_Name}`}</Text>
+                                                        </CardItem>
+                                                        <CardItem style={styles.cardBody}>
+                                                            <Text style={{color:'grey'}}>{`${classItem.Section} - ${classItem.Type}`}</Text>
+                                                            <Text style={{color:'grey'}}>{`${classItem.Start_Time} - ${classItem.End_Time}`}</Text>
+                                                            <Text style={{color:'grey'}}>{classItem.Date}</Text>   
+                                                            <Text style={{color:'grey'}}>{classItem.Venue_ID}</Text>                                      
+                                                        </CardItem>
+                                                    </Card>
+                                                );
+                                            })}
+                                     </ScrollView>
+                                    </View>
+                                </Tab>
+                            );
+                        })}
                 </Tabs>
+                ):(
+                    <LoadingIndicator/>
+                )}
             </Container>
         );
     }
@@ -116,7 +102,7 @@ const styles = StyleSheet.create({
     },
     scheduleContainer:{
         padding: 10,
-        width: '90%',
+        width: '95%',
         height: '100%',
     },
     cardBody:{
