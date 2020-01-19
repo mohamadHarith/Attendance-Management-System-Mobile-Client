@@ -16,6 +16,9 @@ const progress = [
 ]
 
 class ScanBeacon extends React.Component{
+    
+    _isMounted = false;
+
     constructor(props){
         super(props);
         this.state = {
@@ -73,7 +76,9 @@ class ScanBeacon extends React.Component{
                 console.log(data);
                 if(data.beacons.length === 1){
                     if(data.beacons[0].uuid === this.state.UUID){
-                        this.setState({isBeaconDetected: true, progressIndicator:progress[1]});
+                        if(this._isMounted){
+                            this.setState({isBeaconDetected: true, progressIndicator:progress[1]});
+                        }
                         Vibration.vibrate(PATTERN);
                         Beacons.stopRangingBeaconsInRegion(this.state.venueID, this.state.UUID);
                         this.props.handleScanBeacon(true);
@@ -99,9 +104,11 @@ class ScanBeacon extends React.Component{
                res.json().then((data)=>{
                 console.log('from scan beacon', data[0].UUID);
                     
-                this.setState({UUID: data[0].UUID}, ()=>{
-                    this.initScan();
-                })
+               if(this._isMounted){
+                    this.setState({UUID: data[0].UUID}, ()=>{
+                        this.initScan();
+                    })
+               }
                });
            }
            else{
@@ -134,7 +141,9 @@ class ScanBeacon extends React.Component{
             setTimeout(()=>{
                 if(!this.state.isBeaconDetected){
                     Beacons.stopRangingBeaconsInRegion(this.state.venueID, this.state.UUID);
-                    this.setState({progressIndicator: progress[2]});
+                    if(this._isMounted){
+                        this.setState({progressIndicator: progress[2]});
+                    }
                     this.props.handleScanBeacon(false);
                 }
             }, 3000);
@@ -147,7 +156,12 @@ class ScanBeacon extends React.Component{
    }
 
     componentDidMount(){
+        this._isMounted = true;
         this.getBeaconID();
+    }
+
+    componentWillUnmount(){
+        this._isMounted = false;
     }
 
     render(){

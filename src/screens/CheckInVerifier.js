@@ -7,8 +7,28 @@ import {themeColor} from '../colorConstants';
 import {url} from '../server';
 import LoadingIndicator from '../components/LoadingIndicator'
 
+//mock state data for unit test
+// { studentID: '1151101633',
+// classSession:        
+//  { Class_Session_ID: 6,
+//    Class_ID: 3,      
+//    Start_Time: '12:00am',
+//    End_Time: '11:59pm',
+//    Subject_Name: 'SOFT. VERIFICATION & VALID.',
+//    Type: 'Lecture',  
+//    Section: 'TC02',  
+//    Venue_ID: 'CQCR3004',
+//    Venue_Name: 'FCI CLASSROOM' },
+// isScanBeacon: false, 
+// isScanFace: true,    
+// isBeaconDetected: true,
+// isPermissionGranted: true,
+// attendanceSetSuccessfully: false }
 
 class CheckInVerifier extends React.Component{
+    
+    _isMounted = false;
+    
     constructor(props){
         super(props);
         this.state={
@@ -17,11 +37,14 @@ class CheckInVerifier extends React.Component{
             isScanBeacon: false,
             isScanFace: false,
             isBeaconDetected: false,
-            isPermissionGranted: false
+            isPermissionGranted: false,
+            attendanceSetSuccessfully: false
         }
     }
 
     componentDidMount(){
+        this._isMounted = true;
+
         //get check in permission
         fetch(`${url}/students/checkInPermission`, {
             method: 'POST',
@@ -33,10 +56,10 @@ class CheckInVerifier extends React.Component{
         }).then((res)=>{
             if(res.status == 200){
                 res.json().then((data)=>{
-                    if(data.permission == true){
+                    if(data.permission == true && this._isMounted){
                         this.setState({isScanBeacon:true, isPermissionGranted: true});
                     }
-                    else if(data.permission == false){
+                    else if(data.permission == false && this._isMounted){
                         this.props.navigation.pop();
                         ToastAndroid.showWithGravityAndOffset(
                             data.message,
@@ -52,21 +75,39 @@ class CheckInVerifier extends React.Component{
                 throw new Error('Something went wrong')
             }
         }).catch((error)=>{
-            this.props.navigation.pop();
-            ToastAndroid.showWithGravityAndOffset(
-                error.message,
-                ToastAndroid.LONG,
-                ToastAndroid.BOTTOM,
-                25,
-                50,
-            );
+           if(this._isMounted){
+                this.props.navigation.pop();
+                ToastAndroid.showWithGravityAndOffset(
+                    error.message,
+                    ToastAndroid.LONG,
+                    ToastAndroid.BOTTOM,
+                    25,
+                    50,
+                );
+           }
         })
+        setTimeout(()=>{
+            if(!this.state.isPermissionGranted){
+               if(this._isMounted){
+                    ToastAndroid.showWithGravityAndOffset(
+                        'Network request timeout',
+                        ToastAndroid.LONG,
+                        ToastAndroid.BOTTOM,
+                        25,
+                        50,
+                    );
+                    this.props.navigation.pop();
+               }  
+            }
+        }, 5000)
 
     }
 
     handleScanBeacon = (isBeaconDetected)=>{
         if(isBeaconDetected){
+           if(this._isMounted){
             this.setState({isBeaconDetected: isBeaconDetected, isScanBeacon: false, isScanFace:true});
+           }
         }
         else{
             this.props.navigation.pop();
@@ -82,64 +123,85 @@ class CheckInVerifier extends React.Component{
 
     handleScanFace = (isFaceDetetcted)=>{
         if(isFaceDetetcted){
-            //this.setState({isBeaconDetected: false, isScanBeacon: false, isScanFace:false});
-            //update attendnance
-            fetch(`${url}/students/setStudentAttendance`,{
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({
-                    studentID: this.state.studentID,
-                    classID: this.state.classSession.Class_ID,
-                    classSessionID: this.state.classSession.Class_Session_ID,
-                    attendanceStatus: "Present"
+           if(this._isMounted){
+                    //update attendnance
+                fetch(`${url}/students/setStudentAttendance`,{
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        studentID: this.state.studentID,
+                        classID: this.state.classSession.Class_ID,
+                        classSessionID: this.state.classSession.Class_Session_ID,
+                        attendanceStatus: "Present"
+                    })
+                }).then((res)=>{
+                    if(res.status == 200){
+                        res.json().then((data)=>{
+                            if(data.querySuccessful){
+                                if(this._isMounted){
+                                    this.setState({attendanceSetSuccessfully:true});
+                                    this.props.navigation.pop();
+                                    ToastAndroid.showWithGravityAndOffset(
+                                        data.message,
+                                        ToastAndroid.LONG,
+                                        ToastAndroid.BOTTOM,
+                                        25,
+                                        50,
+                                    );
+                                }
+                            }
+                        })
+                    }
+                    else{
+                        throw new Error('Something went wrong.')
+                    }
                 })
-            }).then((res)=>{
-                if(res.status == 200){
-                    res.json().then((data)=>{
-                        if(data.querySuccessful){
-                            this.props.navigation.pop();
+                .catch((error)=>{
+                    if(this._isMounted){
+                        this.props.navigation.pop();
+                        ToastAndroid.showWithGravityAndOffset(
+                            error.message,
+                            ToastAndroid.LONG,
+                            ToastAndroid.BOTTOM,
+                            25,
+                            50,
+                        );
+                    }
+                })
+                setTimeout(()=>{
+                    if(!this.state.attendanceSetSuccessfully){
+                       if(this._isMounted){
                             ToastAndroid.showWithGravityAndOffset(
-                                data.message,
+                                'Network request timeout',
                                 ToastAndroid.LONG,
                                 ToastAndroid.BOTTOM,
                                 25,
                                 50,
                             );
-                        }
-                    })
-                }
-                else{
-                    throw new Error('Something went wrong.')
-                }
-            })
-            .catch((error)=>{
-                this.props.navigation.pop();
-                ToastAndroid.showWithGravityAndOffset(
-                    error.message,
-                    ToastAndroid.LONG,
-                    ToastAndroid.BOTTOM,
-                    25,
-                    50,
-                );
-            })
+                            this.props.navigation.pop();
+                       }
+                    }
+                }, 5000)
+           }
         }
         else{
-            this.props.navigation.pop();
+            if(this._isMounted){
+                this.props.navigation.pop();
+            }
         }
+
     }
 
-   
+   componentWillUnmount(){
+        this._isMounted = false;
+   }
     
-    render(){
-        
-        
-        return(
-            
-          
+    render(){        
+        return(          
             <Container>
                 <Header style={styles.header} androidStatusBarColor={themeColor} hasTabs>
                     <Left>
-                        <Button transparent>
+                        <Button transparent onPress={()=>{this.props.navigation.pop()}}>
                         <Icon name='arrow-back' />
                         </Button>
                     </Left>
@@ -177,15 +239,23 @@ class CheckInVerifier extends React.Component{
                         </Card>
                     </View>
                     {
-                        (this.state.isScanBeacon && !this.state.isBeaconDetected && !this.state.isScanFace)? (
-                            	<ScanBeacon studentID={this.state.studentID} venueID={this.state.classSession.Venue_ID} handleScanBeacon={this.handleScanBeacon} navigation={this.props.navigation}/>
+                        (this.state.isScanBeacon && !this.state.isBeaconDetected)? (
+                            <ScanBeacon 
+                                studentID={this.state.studentID} 
+                                venueID={this.state.classSession.Venue_ID} 
+                                handleScanBeacon={this.handleScanBeacon}
+                                navigation={this.props.navigation}
+                            />
                         ):(
                             <></>
                         )
                     }
                     {
                         (this.state.isScanFace && this.state.isBeaconDetected)? (
-                            	<ScanFace studentID={this.state.studentID} handleScanFace={this.handleScanFace}/>
+                            <ScanFace 
+                                studentID={this.state.studentID} 
+                                handleScanFace={this.handleScanFace}
+                            />
                         ):(
                             <></>
                            
@@ -196,10 +266,8 @@ class CheckInVerifier extends React.Component{
                             	<LoadingIndicator message='Checking permissions...'/>
                         ):(
                             <></>
-                           
                         )
                     }
-
                 </View>
         </Container>
         );
@@ -213,14 +281,12 @@ const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
         flexDirection: 'column',
-        alignItems: 'center',
-        // backgroundColor: 'yellow'
+        alignItems: 'center'
     },
     stepNumber:{
         width: '90%',
         flexDirection: 'row',
         justifyContent: 'center',
-        // backgroundColor: 'red',
         padding: 10,
         marginTop: 15
     },
@@ -240,16 +306,13 @@ const styles = StyleSheet.create({
     },
     cardBody:{
         paddingTop:0,
-        padding:10,
-        // backgroundColor:'red'
+        padding:10
     },
     classSessionDetails:{
-        // backgroundColor:'blue',
         flex:3
     },
     attendancePercentage:{
-        flex:1,
-        // backgroundColor:'yellow'
+        flex:1
     },
     beaconScanningIndicator:{
         width:'90%',
@@ -259,8 +322,7 @@ const styles = StyleSheet.create({
     },
     beaconImage:{
         width: 250,
-        height: 250,
-        // backgroundColor:'red'
+        height: 250
     },
     activityIndicator:{
         marginTop:40,

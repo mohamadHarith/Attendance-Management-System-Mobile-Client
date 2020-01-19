@@ -1,3 +1,3 @@
-const url = 'http://192.168.43.137:5000'
+const url = 'http://192.168.0.120:5000'
 
 module.exports = {url}

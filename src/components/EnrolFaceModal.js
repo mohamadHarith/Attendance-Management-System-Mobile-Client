@@ -72,11 +72,11 @@ class EnrolFaceModal extends React.Component {
                             this.setState({isPictureTaken:true, progressIndicator:instructions[4]}, async ()=>{
                               const options = { quality: 1, base64: true, pauseAfterCapture: true, width: 600, mirrorImage: true};
                               const data = await this.camera.takePictureAsync(options);
-                              //console.log('Cache path: ', data.uri); 
+                              //console.log('from modal: ', data); 
                             //   const setUri = this.props.setUri;
                             //   setUri(this.state.id, data.uri);  
                               //this.handleClose();  
-                              this.props.navigation.state.params.setUri(this.state.id, data.uri);  
+                              this.props.navigation.state.params.setUri(this.state.id, data.base64);  
                               this.handleClose();  
                             });
                           }

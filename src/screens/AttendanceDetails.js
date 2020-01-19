@@ -1,11 +1,43 @@
 import React from 'react';
 import {StyleSheet, View, ToastAndroid, FlatList, TouchableNativeFeedback} from 'react-native';
 import {Container, Header, Left, Right, Body, Button, Title, Text, Card, CardItem, Icon} from 'native-base';
-import {themeColor} from '../colorConstants';
+import {themeColor, success, fail} from '../colorConstants';
 import {url} from '../server';
 import LoadingIndicator from '../components/LoadingIndicator';
 
+//mock state data for unit test
+// { 
+//     studentID: '1151101633',
+//   classID: 12,
+//   classData:
+//    { Class_ID: 12,     
+//      Type: 'Meeting',  
+//      Section: 'MT06',  
+//      Subject_ID: 'TPT3101',
+//      Subject_Name: 'Demo To Mr Ban',
+//      numberOfClassSessions: '1',
+//      numberOfClassSessionsAttended: '1',
+//      attendancePercentage: 100 },
+//   attendanceData:      
+//    [ { Class_ID: 12,   
+//        Class_Session_ID: 10,
+//        Class_Session_Date: '17 Jan 2020',
+//        Class_Session_Start_Time: '12:00am',
+//        Class_Session_End_Time: '11:59pm',
+//        Venue_ID: 'BR4004',
+//        Attendance_ID: 36,
+//        Attendance_Status: 'Present',
+//        Week: 9,        
+//        Day: 'Friday' } 
+//    ],
+//    isDataLoaded: true,  
+//    flatListRefresh: false 
+// }
+
 class AttendancePercentage extends React.Component{
+    
+    _isMounted = false;
+    
     constructor(props){
         super(props);
         this.state={
@@ -19,39 +51,64 @@ class AttendancePercentage extends React.Component{
     }
 
     fetchData = ()=>{
-        fetch(`${url}/students/getAttendanceDetails/${this.state.classID}/${this.state.studentID}`).then((res)=>{
+        fetch(`${url}/students/getAttendanceDetails/${this.state.classID}/${this.state.studentID}`,{
+        }).then((res)=>{
             if(res.status == 200){
                 res.json().then((data)=>{
-                    this.setState({attendanceData:data, isDataLoaded:true, flatListRefresh:false});
+                    if(this._isMounted){
+                        this.setState({attendanceData:data, isDataLoaded:true, flatListRefresh:false});
+                    }
                 })
             }
             else{
-                throw new Error('Something went wrong');
+                throw new Error('Attendance details data not available');
             }
         }).catch((error)=>{
-            this.setState({isDataLoaded:true, flatListRefresh:false});
-            ToastAndroid.showWithGravityAndOffset(
-                error.message,
-                ToastAndroid.LONG,
-                ToastAndroid.BOTTOM,
-                25,
-                50,
-            );
+            if(this._isMounted){
+                ToastAndroid.showWithGravityAndOffset(
+                    error.message,
+                    ToastAndroid.LONG,
+                    ToastAndroid.BOTTOM,
+                    25,
+                    50,
+                );
+                this.props.navigation.pop();
+            }
+           
         })
+        setTimeout(()=>{
+            if(!this.state.isDataLoaded){
+               if(this._isMounted){
+                    ToastAndroid.showWithGravityAndOffset(
+                        'Network request timeout',
+                        ToastAndroid.LONG,
+                        ToastAndroid.BOTTOM,
+                        25,
+                        50,
+                    );
+                    this.props.navigation.pop();
+               }
+                
+            }
+        }, 5000)
     }
     
     componentDidMount(){
+        this._isMounted = true;
         this.fetchData();
     }
+
+    componentWillUnmount() {
+        this._isMounted = false;
+      }
       
     render(){
-        console.log(this.state);
         return(
             <Container>
                 <Header style={styles.header} androidStatusBarColor={themeColor}>
                     <Left style={{flex:1}}>
-                        <Button transparent>
-                        <Icon name='arrow-back' />
+                        <Button transparent onPress={()=>{this.props.navigation.pop()}}>
+                            <Icon name='arrow-back' />
                         </Button>
                     </Left>
                     <Body style={{flex:3}}>
@@ -65,21 +122,23 @@ class AttendancePercentage extends React.Component{
                         <FlatList
                             data={this.state.attendanceData}
                             onRefresh = {()=>{
+                               if(this._isMounted){
                                 this.setState({flatListRefresh:true});
                                 this.fetchData();
+                               }
                             }}
                             ListHeaderComponent={()=>{
                                 return(
-                                   
                                     <View style={styles.classDetails}>
-                                        <Text style={{fontSize:18, fontWeight: 'bold'}}>{`${this.state.classData.Subject_ID} ${this.state.classData.Subject_Name}`}</Text>
-                                       <Text style={{color:'grey', fontSize:15}}>
-                                                    {`${this.state.classData.Type} - ${this.state.classData.Section}`}
-                                                </Text>
-                                                <Text style={{color:'grey', fontSize:15}}>
-                                                    {`${this.state.classData.numberOfClassSessionsAttended} of ${this.state.classData.numberOfClassSessions} class sessions attended.`}
-                                                </Text> 
-                                            
+                                        <Text style={{fontSize:18, fontWeight: 'bold'}}>
+                                            {`${this.state.classData.Subject_ID} ${this.state.classData.Subject_Name}`}
+                                        </Text>
+                                        <Text style={{color:'grey', fontSize:15}}>
+                                            {`${this.state.classData.Type} - ${this.state.classData.Section}`}
+                                        </Text>
+                                        <Text style={{color:'grey', fontSize:15}}>
+                                            {`${this.state.classData.numberOfClassSessionsAttended} of ${this.state.classData.numberOfClassSessions} class sessions attended.`}
+                                        </Text>   
                                     </View>
                                 );
                             }}
@@ -99,7 +158,7 @@ class AttendancePercentage extends React.Component{
                                                 <Text style={{color:'grey', fontSize:15}}>{item.Venue_ID}</Text>                                          
                                             </View>  
                                             <View style={styles.attendancePercentage}>
-                                                <Text style={{textAlign:'right', fontSize: 30, color: item.Attendance_Status == 'Absent' ? 'red' : '#90ee90'}}>
+                                                <Text style={{textAlign:'right', fontSize: 30, color: item.Attendance_Status == 'Absent' ? fail : success}}>
                                                     {item.Attendance_Status}
                                                 </Text>
                                             </View>                                      
@@ -123,15 +182,12 @@ class AttendancePercentage extends React.Component{
 
 const styles = StyleSheet.create({
     header:{
-        backgroundColor: themeColor,
-        zIndex:1
+        backgroundColor: themeColor
     },
     mainContainer: {
         flex: 1,
         flexDirection: 'column',
-        alignItems: 'center',
-        zIndex:0
-        // backgroundColor: 'yellow'
+        alignItems: 'center'
     },
     classDetails:{
         padding:10,
@@ -143,10 +199,8 @@ const styles = StyleSheet.create({
     cardBody:{
         paddingTop:0,
         padding:10,
-        //backgroundColor:'red'
     },
     classSessionDetails:{
-     //backgroundColor:'blue',
         width:'50%'
     },
     attendancePercentage:{
@@ -154,7 +208,6 @@ const styles = StyleSheet.create({
         flexDirection:'row',
         justifyContent:'flex-end',
         alignItems:'center',
-        //backgroundColor:'yellow'
     }
 });
 
