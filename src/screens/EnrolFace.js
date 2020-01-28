@@ -8,6 +8,8 @@ import {themeColor} from '../colorConstants';
 import {url} from '../server';
 import uuidv1 from 'uuid/v1';
 
+console.ignoredYellowBox = ['Setting a timer'];
+
 export default class EnrolFace extends Component {
   
   _isMounted = false;
@@ -133,7 +135,7 @@ export default class EnrolFace extends Component {
               }
                 
             }
-        }, 60000)
+        }, 120000)
       }
       else{
         throw new Error('Something went wrong')
@@ -173,8 +175,7 @@ export default class EnrolFace extends Component {
     }
   }
 
-  render() {
-    
+  render() {    
     
     if(!this.state.isLoading){
       return (

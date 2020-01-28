@@ -2,7 +2,6 @@ import React from 'react';
 import { 
    Container, 
   Header, 
-  Content, 
   Form, 
   Item, 
   Input, 
@@ -18,84 +17,134 @@ import {StyleSheet,
   ToastAndroid
 } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
+import LoadingIndicator from '../components/LoadingIndicator'
 import {url} from '../server';
+import {themeColor} from '../colorConstants';
 
 
 class Login extends React.Component {
   
+  _isMounted = false;
+
   constructor(props){
     super(props);
     this.state = {
+      isLoaded:false,
       studentID: '',
       password: ''
     }
+    
   }
 
   handleLogin = ()=>{
-    // fetch('http://192.168.1.3:5000/')
-    // .then(response=>console.log(response))
-    // .catch(err=>console.log(err));
-    //this.props.navigation.navigate('main');
-    //this.props.navigation.navigate('authUser');
-
-    fetch(`${url}/students/authStudent`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        studentID: this.state.studentID,
-        password: this.state.password
+    try{
+     if(this._isMounted && this.state.studentID.length > 0 && this.state.password.length>0){
+      this.setState({isLoaded:false});
+      fetch(`${url}/students/authStudent`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          studentID: this.state.studentID,
+          password: this.state.password
+        })
+      }).then((res)=>{
+        if(res.status == 200 && this._isMounted){
+          res.json().then(async (data)=>{
+            await AsyncStorage.setItem('studentID', data[0].Student_ID);
+            await AsyncStorage.setItem('studentName', data[0].Student_Name);
+            this.props.navigation.navigate('authUser');
+          });
+        }
+        else{
+          throw new Error('No matching user please try again');
+        }
+      }).catch((error)=>{
+        if(this._isMounted){
+          this.setState({isLoaded:true});
+          ToastAndroid.showWithGravityAndOffset(
+            error.message,
+             ToastAndroid.LONG,
+             ToastAndroid.BOTTOM,
+             25,
+             50,
+           );
+        }
       })
-    }).then((res)=>{
-      if(res.status == 200){
-        res.json().then(async (data)=>{
-          await AsyncStorage.setItem('studentID', data[0].Student_ID);
-          await AsyncStorage.setItem('studentName', data[0].Student_Name);
-          this.props.navigation.navigate('authUser');
-        });
+      setTimeout(()=>{           
+           if(this._isMounted && !this.state.isLoaded){
+            this.setState({isLoaded:true});    
+            ToastAndroid.showWithGravityAndOffset(
+                    'Network request timeout',
+                    ToastAndroid.LONG,
+                    ToastAndroid.BOTTOM,
+                    25,
+                    50,
+                );
+           }
+      }, 5000)
+     }else{
+        throw new Error('Please make sure you enter student ID and password')
+     }
+    }catch(error){
+      if(this._isMounted){
+        ToastAndroid.showWithGravityAndOffset(
+          error.message,
+           ToastAndroid.LONG,
+           ToastAndroid.BOTTOM,
+           25,
+           50,
+         );
       }
-      else{
-        throw new Error('Invalid user');
-      }
-    }).catch((error)=>{
-      ToastAndroid.showWithGravityAndOffset(
-       error.message,
-        ToastAndroid.LONG,
-        ToastAndroid.BOTTOM,
-        25,
-        50,
-      );
-    })
+    }
   }
 
  async componentDidMount(){
+    this._isMounted = true;
     await AsyncStorage.removeItem('studentID');
     await AsyncStorage.removeItem('studentName');
+    this.setState({isLoaded:true});
+  }
+
+  componentWillUnmount(){
+    this._isMounted = false;
   }
   
   render(){
-    console.log(this.state);
-    
     return(
     <Container>
-        <Header androidStatusBarColor="#D9220E" style={styles.header}>
-          <Body>
-            <Title style={styles.headerTitle}>MMU Attendance</Title>
-          </Body>
-        </Header>        
-        <Content>
+        {this.state.isLoaded?(
+          <View style={{flex:1}}>
+            <Header androidStatusBarColor={themeColor} style={{backgroundColor:themeColor}}>
+              <Body>
+                <Title style={styles.headerTitle}>MMU Attendance</Title>
+              </Body>
+            </Header>        
+        
           <View style={styles.mainContainer}>
-          <Form>
+            <Form style={styles.formStyle}>
               <Item floatingLabel>
-                <Label>Student ID</Label>
-                <Input selectionColor={'#D9220E'} keyboardType='number-pad' returnKeyType='next' onChangeText={(text)=>{
-                  this.setState({studentID: text})
-                }}/>
+                <Label style={{color:'grey'}}>Student ID</Label>
+                <Input 
+                    selectionColor={'#D9220E'} 
+                    returnKeyType='next' 
+                    onChangeText={(text)=>{
+                      this.setState({studentID: text})
+                    }}
+                    onSubmitEditing={()=>{this.passwordTextInputRef._root.focus()}}
+                />
               </Item>
                <Item floatingLabel>
-                <Label>Password</Label>
-                <Input secureTextEntry={true} selectionColor = {'#D9220E'} returnKeyType='done' onChangeText={(text)=>{
-                  this.setState({password:text})
-                }}/>
+                <Label style={{color:'grey'}}>Password</Label>
+                <Input 
+                      getRef={(input)=>{this.passwordTextInputRef = input}}
+                      secureTextEntry={true} 
+                      selectionColor = {'#D9220E'} 
+                      returnKeyType='go' 
+                      onChangeText={(text)=>{
+                        this.setState({password:text})
+                      }}
+                      onSubmitEditing={()=>{this.handleLogin()}}
+                />
               </Item>
               <View style={styles.buttonContainer}>
                   <Button style={styles.button} onPress={()=>{this.handleLogin()}}>
@@ -103,8 +152,11 @@ class Login extends React.Component {
                  </Button>
               </View>
             </Form> 
-          </View>       
-        </Content>       
+          </View>            
+          </View>
+        ):(
+          <LoadingIndicator/>
+        )}
       </Container>
   );
   }
@@ -113,11 +165,7 @@ class Login extends React.Component {
 
 
 const styles = StyleSheet.create({
-
-  header:{
-    backgroundColor:'#D9220E'
-  },
-  
+ 
   headerTitle:{
     paddingLeft: 20
   },
@@ -127,27 +175,26 @@ const styles = StyleSheet.create({
     width: 130,
     height: 40,
     justifyContent: 'center',
-    backgroundColor: '#D9220E'
+    backgroundColor: themeColor
   },
 
   mainContainer:{
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    width: '100%',
-    height: '100%',
-    // backgroundColor: '#D9220E',
-    padding: 20,
-    marginTop: 150 
+    flex:1,
+    flexDirection:'column',
+    justifyContent:'center',
+    alignItems:'center'
 
+  },
+
+  formStyle:{
+    width:'90%',
+    padding:10
   },
 
   buttonContainer:{
     flexDirection: 'column',
     alignItems: 'center',
-    
   }
-
-
 });
 
 export default Login;

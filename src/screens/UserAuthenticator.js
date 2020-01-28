@@ -6,6 +6,8 @@ import {url} from '../server'
 
 class UserAuthenticator extends React.Component{
     
+   _isMounted = false;
+
     constructor(props){
         super(props);
         this.state={
@@ -13,111 +15,75 @@ class UserAuthenticator extends React.Component{
             studentName: '',
         }
     }
-
-    authenticateUser = async(studentID, studentName)=>{
-       
-    }
     
     isValidUser = async()=>{
         const userID = await AsyncStorage.getItem('studentID');
         const userName = await AsyncStorage.getItem('studentName');
 
-        console.log('isvalid', userID)
-        if(userID != null && userName != null){
+        if(userID != null && userName != null && this._isMounted){
             this.setState({studentID: userID, studentName: userName});
-            return true;
+            this.hasEnrolledFace();
         }
         else{
-            return false;
+            if(this._isMounted){
+                this.props.navigation.navigate('logIn');
+            }
         }
     }
 
     hasEnrolledFace = async ()=>{
-      try{
-        const response = await fetch(`${url}/students/checkFaceEnrolment`,{
+        fetch(`${url}/students/checkFaceEnrolment`,{
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({studentID: this.state.studentID}),
-        });
-        if(response.status == 200){
-            const data = await response.json();
-            if(data[0].Face_Enrolment_Status == true){
-                return true;
+        }).then((res)=>{
+            if(res.status == 200 && this._isMounted){
+                res.json().then((data)=>{
+                    if(data[0].Face_Enrolment_Status == true){
+                        this.props.navigation.navigate('main', {studentID: this.state.studentID, studentName:this.state.studentName});
+                    }
+                    else{
+                        this.props.navigation.navigate('enrolFace',{studentID: this.state.studentID});
+
+                    }
+                })
             }
             else{
-                return false;
+                throw new Error('Could not get face enrolment status')
             }
-        }
-        else{
-        throw new Error('Something went wrong');
-        }
-      }catch(error){
-        ToastAndroid.showWithGravityAndOffset(
-            error.message,
-            ToastAndroid.LONG,
-            ToastAndroid.BOTTOM,
-            25,
-            50,
-          );
-      }
-        
-        
-        // fetch(`${url}/students/checkFaceEnrolment`, {
-        //     method: 'POST',
-        //     headers: {'Content-Type':'application/json'},
-        //     body: JSON.stringify({studentID: this.state.studentID})
-        // }).then((res)=>{
-        //     if(res.status == 200){
-        //         res.json().then((data)=>{
-        //             if(data[0].Face_Enrolment_Status == true){
-        //                 this.setState({isFaceEnroled:true});
-        //             }
-        //              else{
-        //                 this.setState({isFaceEnroled:false});
-        //                 }
-        //         })
-        //     }
-        //     else{
-        //         throw new Error('Error in checking face enrolment')
-        //     }
-        // }).catch((error)=>{
-        //     this.setState({isFaceEnroled:false});
-        //     ToastAndroid.showWithGravityAndOffset(
-        //         error.message,
-        //         ToastAndroid.LONG,
-        //         ToastAndroid.BOTTOM,
-        //         25,
-        //         50,
-        //       );
-        // });
+        }).catch((error)=>{
+            if(this._isMounted){
+                ToastAndroid.showWithGravityAndOffset(
+                    error.message,
+                    ToastAndroid.LONG,
+                    ToastAndroid.BOTTOM,
+                    25,
+                    50,
+               );
+               this.props.navigation.navigate('logIn');
+            }
+        })
+        setTimeout(()=>{           
+                if(this._isMounted){
+                 ToastAndroid.showWithGravityAndOffset(
+                         'Network request timeout',
+                         ToastAndroid.LONG,
+                         ToastAndroid.BOTTOM,
+                         25,
+                         50,
+                    );
+                    this.props.navigation.navigate('logIn');
+                }
+        }, 5000)
     }
-
-    authenticate = async()=>{
-        const isValidUser = await this.isValidUser();
-        
-       let hasEnrolledFace;
-        if(isValidUser){
-            hasEnrolledFace = await this.hasEnrolledFace();
-            console.log('enrolled face', hasEnrolledFace );
-            
-       }        
-        
-        if(isValidUser && hasEnrolledFace){
-            this.props.navigation.navigate('main', {studentID: this.state.studentID, studentName:this.state.studentName});
-        }
-        else if(isValidUser && ! hasEnrolledFace){
-            this.props.navigation.navigate('enrolFace',{
-                studentID: this.state.studentID
-            });
-        }
-        else if(!isValidUser){
-            this.props.navigation.navigate('logIn');
-        }
-    }
-
 
     async componentDidMount(){
-       this.authenticate();
+       this._isMounted = true;
+        this.isValidUser();
+    }
+
+    componentWillUnmount(){
+        this._isMounted = false;
     }
 
     render(){

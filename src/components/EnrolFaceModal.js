@@ -1,8 +1,8 @@
 import React from 'react';
-import {View, StyleSheet, Modal, TouchableWithoutFeedback, ActivityIndicator} from 'react-native';
-import {Icon, Text, Button} from 'native-base';
+import {View, StyleSheet,TouchableWithoutFeedback, ActivityIndicator, Text as NativeText} from 'react-native';
+import {Text} from 'native-base';
 import { RNCamera } from 'react-native-camera';
-import {themeColor} from '../colorConstants';
+import {themeColor, success2, fail} from '../colorConstants';
 
 const instructions = [
     'No face detected.',
@@ -14,10 +14,12 @@ const instructions = [
 ]
 
 class EnrolFaceModal extends React.Component {
+    
+    _isMounted = false;
+    
     constructor(props){
         super(props);
         this.state= {
-            visible: false,
             id: this.props.navigation.getParam('id'),
             isSingleFaceDetected: false,
             isPictureTaken: false,
@@ -27,20 +29,12 @@ class EnrolFaceModal extends React.Component {
         }
     }
 
-    // componentDidUpdate(prevProps){
-    //     if(this.props.visible != prevProps.visible){
-    //         this.setState({visible: this.props.visible, id:this.props.id, isSingleFaceDetected:false, isPictureTaken:false});
-    //     }
-    // }
-
     handleClose=()=>{
-        // const handleModalClose = this.props.hide;
-        // handleModalClose();
         this.props.navigation.navigate('enrolFace');
     }
 
     handleFaceDetection = async (data)=>{
-        if(data.faces.length === 1 && !this.state.isPictureTaken){
+        if(data.faces.length === 1 && !this.state.isPictureTaken && this._isMounted){
             this.setState({isSingleFaceDetected: true});
             this.setState({boundingBox: data.faces[0].bounds}, async ()=>{              
                                 
@@ -71,11 +65,7 @@ class EnrolFaceModal extends React.Component {
                         if(!this.state.isPictureTaken && this.state.isSingleFaceDetected && this.state.isFaceAligned){
                             this.setState({isPictureTaken:true, progressIndicator:instructions[4]}, async ()=>{
                               const options = { quality: 1, base64: true, pauseAfterCapture: true, width: 600, mirrorImage: true};
-                              const data = await this.camera.takePictureAsync(options);
-                              //console.log('from modal: ', data); 
-                            //   const setUri = this.props.setUri;
-                            //   setUri(this.state.id, data.uri);  
-                              //this.handleClose();  
+                              const data = await this.camera.takePictureAsync(options); 
                               this.props.navigation.state.params.setUri(this.state.id, data.base64);  
                               this.handleClose();  
                             });
@@ -89,25 +79,21 @@ class EnrolFaceModal extends React.Component {
                 }
             });        
         }
-        else if(!this.state.isPictureTaken){
+        else if(!this.state.isPictureTaken && this._isMounted){
             this.setState({isSingleFaceDetected: false, isFaceAligned: false, progressIndicator:instructions[0]});
         } 
       }
 
+    componentDidMount(){
+        this._isMounted = true;
+    }
+
+    componentWillUnmount(){
+        this._isMounted = false;
+    }
+
 
     render(){
-        let instruction;
-        switch(this.state.id){
-            case 1: 
-                instruction = 'Position your phone parallel to your face.';
-                break;
-            case 2: 
-                instruction = 'Position your phone at an angle below your phone.';
-                break;
-            case 3: 
-                instruction = 'Position your phone slightly to the right or left of your face';
-                break;
-        }
 
         return(
             
@@ -118,10 +104,10 @@ class EnrolFaceModal extends React.Component {
                         </View>
                    </TouchableWithoutFeedback>
                     <View style={styles.textContainer}>
-                        <Text style={{fontFamily:'Roboto', color:'grey', textAlign:'center'}}>{instruction}</Text>
+                        <Text style={{fontFamily:'Roboto', color:'grey', textAlign:'center'}}>Position your phone parallel to your face</Text>
                     </View>
                     <View style={styles.cameraSuperContainer}>
-                        <View style={{...styles.cameraContainer, borderColor: this.state.isSingleFaceDetected ? '#90ee90' : 'red'}}>
+                        <View style={{...styles.cameraContainer, borderColor: this.state.isSingleFaceDetected ? success2 : fail}}>
                             <RNCamera
                                 ref={ref => {
                                     this.camera = ref;
@@ -169,7 +155,7 @@ class EnrolFaceModal extends React.Component {
                     </View>
                     <View style={styles.activityIndicator}>
                         <ActivityIndicator size='large' color={themeColor}/>
-                        <Text style={{color:'grey', marginLeft:10}}>{this.state.progressIndicator}</Text>
+                        <NativeText style={{color:'grey', marginLeft:10}}>{this.state.progressIndicator}</NativeText>
                     </View>
                     <View style={styles.textContainer}>
                         <Text style={{fontFamily:'Roboto', color:'grey', textAlign:'center', fontStyle:'italic'}}>

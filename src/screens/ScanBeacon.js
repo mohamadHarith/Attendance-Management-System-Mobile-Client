@@ -1,6 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, Image, ActivityIndicator, DeviceEventEmitter, PermissionsAndroid, Vibration, ToastAndroid} from 'react-native';
-import {Container, Header, Left, Right, Body, Button, Title, Text, Card, CardItem, Toast, Icon} from 'native-base';
+import {StyleSheet, View, Image, ActivityIndicator, DeviceEventEmitter, PermissionsAndroid, Vibration, ToastAndroid, Text as NativeText} from 'react-native';
 import { BluetoothStatus } from 'react-native-bluetooth-status';
 import Beacons  from 'react-native-beacons-manager';
 import {themeColor} from '../colorConstants';
@@ -29,32 +28,47 @@ class ScanBeacon extends React.Component{
         }
     }
 
+    //helper function
+    delay = ms => new Promise(res => setTimeout(res, ms));
+
     bluetoothPermission = async()=>{
-        try{
-              //enable bluetooth
+        try{ //enable bluetooth
               let isEnabled = await BluetoothStatus.state();
-              console.log('bluetooth state', isEnabled);
               if(!isEnabled){
-                  isEnabled = await BluetoothStatus.enable(true);
-                  if(isEnabled){return true;}
-                  else{throw new Error('Blueetoth not enabled');}
+                  BluetoothStatus.enable(true);
+                  await this.delay(3000);
+                  isEnabled =  await BluetoothStatus.state();                 
+                  if(isEnabled){
+                      return true
+                  }
+                  else{    
+                     throw new Error('Blueetoth not enabled');
+                  }
               }
-              else if(isEnabled){return true;}   
+              else{
+                  return true;
+              }
+                   
         }catch(error){
-                console.log(error);
+            if(this._isMounted){
+                ToastAndroid.showWithGravityAndOffset(
+                    error.message,
+                    ToastAndroid.LONG,
+                    ToastAndroid.BOTTOM,
+                    25,
+                    50,
+                );
+                this.props.navigation.pop();
                 return false;
+            }
+                
         }
     }
 
     locationPermission = async()=>{
         try{
             const granted = await PermissionsAndroid.request(
-                PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-                    {
-                        'title': 'Location Permission',
-                        'message': 'MMU needs to access your location.'
-                    }
-            );
+                PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
             if (granted === PermissionsAndroid.RESULTS.GRANTED) {
                  return true;
             } else {
@@ -62,8 +76,17 @@ class ScanBeacon extends React.Component{
             }
 
         }catch(error){
-            console.log(error);
-            return false;
+            if(this._isMounted){
+                ToastAndroid.showWithGravityAndOffset(
+                    error.message,
+                    ToastAndroid.LONG,
+                    ToastAndroid.BOTTOM,
+                    25,
+                    50,
+                );
+                this.props.navigation.pop();
+                return false;
+            }
         }
     }
 
@@ -73,12 +96,10 @@ class ScanBeacon extends React.Component{
             Beacons.startRangingBeaconsInRegion(this.state.venueID, this.state.UUID);
 
             DeviceEventEmitter.addListener('beaconsDidRange', (data)=>{
-                console.log(data);
+                // console.log(data);
                 if(data.beacons.length === 1){
-                    if(data.beacons[0].uuid === this.state.UUID){
-                        if(this._isMounted){
-                            this.setState({isBeaconDetected: true, progressIndicator:progress[1]});
-                        }
+                    if(data.beacons[0].uuid === this.state.UUID && this._isMounted){
+                        this.setState({isBeaconDetected: true, progressIndicator:progress[1]});
                         Vibration.vibrate(PATTERN);
                         Beacons.stopRangingBeaconsInRegion(this.state.venueID, this.state.UUID);
                         this.props.handleScanBeacon(true);
@@ -86,7 +107,7 @@ class ScanBeacon extends React.Component{
                 }
             });
         }catch(error){
-            console.log(error);
+            //console.log(error);
             this.props.handleScanBeacon(false);
         }
    }
@@ -101,9 +122,7 @@ class ScanBeacon extends React.Component{
            })
        }).then((res)=>{
            if(res.status == 200){
-               res.json().then((data)=>{
-                console.log('from scan beacon', data[0].UUID);
-                    
+               res.json().then((data)=>{                   
                if(this._isMounted){
                     this.setState({UUID: data[0].UUID}, ()=>{
                         this.initScan();
@@ -127,31 +146,43 @@ class ScanBeacon extends React.Component{
    }
 
    initScan = async()=>{
+        try{
+            let isBluetoothEnabled = false;
+            let isLocationEnabled = false;
             
-        let isBluetoothEnabled = false;
-        let isLocationEnabled = false;
-        
-        isBluetoothEnabled = await this.bluetoothPermission();
-        isLocationEnabled = await this.locationPermission();
-
-        if(isBluetoothEnabled && isLocationEnabled){
-            
-            await this.scanBeacon();     
-            //timeout if no beacon is found
-            setTimeout(()=>{
-                if(!this.state.isBeaconDetected){
-                    Beacons.stopRangingBeaconsInRegion(this.state.venueID, this.state.UUID);
-                    if(this._isMounted){
-                        this.setState({progressIndicator: progress[2]});
-                    }
-                    this.props.handleScanBeacon(false);
-                }
-            }, 3000);
-                    
+            isBluetoothEnabled = await this.bluetoothPermission();
+            isLocationEnabled = await this.locationPermission();
+    
+            if(isBluetoothEnabled && isLocationEnabled){
                 
-        }
-        else{
-            console.log('yep its working 2');
+                await this.scanBeacon();     
+                //timeout if no beacon is found
+                setTimeout(()=>{
+                    if(!this.state.isBeaconDetected){
+                        Beacons.stopRangingBeaconsInRegion(this.state.venueID, this.state.UUID);
+                        if(this._isMounted){
+                            this.setState({progressIndicator: progress[2]});
+                        }
+                        this.props.handleScanBeacon(false);
+                    }
+                }, 3000);
+                        
+                    
+            }
+            else{
+               throw new Error('App permission errors');
+            }
+        }catch(error){
+            if(this._isMounted){
+                ToastAndroid.showWithGravityAndOffset(
+                    error.message,
+                    ToastAndroid.LONG,
+                    ToastAndroid.BOTTOM,
+                    25,
+                    50,
+                );
+                this.props.navigation.pop();
+            }
         }
    }
 
@@ -172,7 +203,7 @@ class ScanBeacon extends React.Component{
                 </View>
                  <View style={styles.activityIndicator}>
                     <ActivityIndicator size='large' color={themeColor}/>
-                    <Text style={{color:'grey', marginLeft:10}}>{this.state.progressIndicator}</Text>
+                    <NativeText style={{color:'grey', marginLeft:10}}>{this.state.progressIndicator}</NativeText>
                 </View>
             </View>
         );

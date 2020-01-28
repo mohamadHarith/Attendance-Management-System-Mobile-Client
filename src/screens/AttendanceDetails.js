@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, ToastAndroid, FlatList, TouchableNativeFeedback} from 'react-native';
+import {StyleSheet, View, ToastAndroid, FlatList, TouchableNativeFeedback, Text as NativeText} from 'react-native';
 import {Container, Header, Left, Right, Body, Button, Title, Text, Card, CardItem, Icon} from 'native-base';
 import {themeColor, success, fail} from '../colorConstants';
 import {url} from '../server';
@@ -137,12 +137,15 @@ class AttendancePercentage extends React.Component{
                                             {`${this.state.classData.Type} - ${this.state.classData.Section}`}
                                         </Text>
                                         <Text style={{color:'grey', fontSize:15}}>
-                                            {`${this.state.classData.numberOfClassSessionsAttended} of ${this.state.classData.numberOfClassSessions} class sessions attended.`}
+                                            {`${this.state.classData.numberOfClassSessionsAttended} of ${this.state.classData.numberOfClassSessions} class sessions attended`}
                                         </Text>   
                                     </View>
                                 );
                             }}
                             refreshing={this.state.flatListRefresh}
+                            ListEmptyComponent={()=>{
+                                <NativeText>No attendance detail data found. Pull to refresh.</NativeText>
+                            }}
                             renderItem={({item,index})=>{
                                 return(
                                     <TouchableNativeFeedback useForeground>
@@ -158,7 +161,7 @@ class AttendancePercentage extends React.Component{
                                                 <Text style={{color:'grey', fontSize:15}}>{item.Venue_ID}</Text>                                          
                                             </View>  
                                             <View style={styles.attendancePercentage}>
-                                                <Text style={{textAlign:'right', fontSize: 30, color: item.Attendance_Status == 'Absent' ? fail : success}}>
+                                                <Text style={{textAlign:'right', fontSize: 20, color: item.Attendance_Status == 'Absent' ? fail : success}}>
                                                     {item.Attendance_Status}
                                                 </Text>
                                             </View>                                      
@@ -194,7 +197,8 @@ const styles = StyleSheet.create({
         width:'95%'
     },
     attendanceData:{
-        width:'95%'
+        width:'95%',
+        flex:1
     },
     cardBody:{
         paddingTop:0,
@@ -202,6 +206,10 @@ const styles = StyleSheet.create({
     },
     classSessionDetails:{
         width:'50%'
+    },
+    detailItem:{
+        flexDirection:'row',
+        justifyContent:'flex-start'
     },
     attendancePercentage:{
         width:'50%',

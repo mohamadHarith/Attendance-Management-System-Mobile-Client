@@ -13,16 +13,6 @@ import AttendanceDetails from './src/screens/AttendanceDetails';
 import SideBar from './src/components/SideBar';
 import { createStackNavigator } from 'react-navigation-stack';
 
-// const checkInSwitchNavigator = createSwitchNavigator({
-//   checkIn: CheckInVerifier,
-//   scanBeacon: ScanBeacon,
-//   scanFace: ScanFace
-// },
-// {
-//   initialRouteName:'checkIn',
-// }
-// );
-
 const AttendancePercentageStackNavigator = createStackNavigator({
   attendanceOverview: AttendancePercentage,
   attendanceDetails: AttendanceDetails

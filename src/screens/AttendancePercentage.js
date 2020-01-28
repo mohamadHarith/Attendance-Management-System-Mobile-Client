@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, ToastAndroid, FlatList, TouchableNativeFeedback} from 'react-native';
+import {StyleSheet, View, ToastAndroid, FlatList, TouchableNativeFeedback, Text as NativeText} from 'react-native';
 import {Container, Header, Left, Right, Body, Button, Title, Text, Card, CardItem, Icon} from 'native-base';
 import {themeColor, success, fail} from '../colorConstants';
 import {url} from '../server';
@@ -123,6 +123,7 @@ class AttendancePercentage extends React.Component{
                 </Header>
                 <View style={styles.mainContainer}>
                        {this.state.isDataLoaded?(
+                        <View style={styles.classSession}>
                         <FlatList
                             data={this.state.attendanceData}
                             onRefresh = {()=>{
@@ -131,23 +132,31 @@ class AttendancePercentage extends React.Component{
                                 this.fetchData();
                                }
                             }}
-                           
+                           ListEmptyComponent={()=>{
+                                <NativeText>No attendance data found. Pull to refresh.</NativeText>
+                           }}
                             refreshing={this.state.flatListRefresh}
                             renderItem={({item,index})=>{
                                 return(
-                                    <TouchableNativeFeedback useForeground onPress={()=>{this.handleClick(index)}}>
+                                         <TouchableNativeFeedback useForeground onPress={()=>{this.handleClick(index)}}>
                                         <Card>
                                         <CardItem style={{paddingBottom:0}}>
                                             <Text style={{fontSize:18, fontWeight: 'bold'}}>{`${item.Subject_ID} ${item.Subject_Name}`}</Text>
                                         </CardItem>
                                         <CardItem style={styles.cardBody}>
                                             <View style={styles.classDetails}>
-                                                <Text style={{color:'grey', fontSize:15}}>
-                                                    {`${item.Type} - ${item.Section}`}
-                                                </Text>
-                                                <Text style={{color:'grey', fontSize:15}}>
-                                                    {`${item.numberOfClassSessionsAttended} of ${item.numberOfClassSessions} class sessions attended.`}
-                                                </Text>
+                                                <View style={styles.detailItem}>
+                                                    	<Icon name='book' style={{fontSize:20, color:'grey', textAlign:'center'}} />
+                                                        <Text style={{color:'grey', fontSize:15}}>
+                                                            {`${item.Type} - ${item.Section}`}
+                                                        </Text>
+                                                </View>
+                                                <View style={styles.detailItem}>
+                                                    	<Icon name='pie' style={{fontSize:20, color:'grey', textAlign:'center'}} />
+                                                        <Text style={{color:'grey', fontSize:15}}>
+                                                            {`${item.numberOfClassSessionsAttended} of ${item.numberOfClassSessions} class sessions attended`}
+                                                        </Text>
+                                                </View>
                                             </View>  
                                             <View style={styles.attendancePercentage}>
                                             <Text style={{textAlign:'center', fontSize: 30, fontWeight:'bold', color: item.attendancePercentage<80 ? fail : success}}>
@@ -161,6 +170,7 @@ class AttendancePercentage extends React.Component{
                             }}
                             keyExtractor={(item, index) => index.toString()}
                         />
+                    </View>
                        ):(
                             <LoadingIndicator/>
                        )}
@@ -173,16 +183,15 @@ class AttendancePercentage extends React.Component{
 const styles = StyleSheet.create({
     header:{
         backgroundColor: themeColor,
-        zIndex:1
     },
     mainContainer: {
         flex: 1,
         flexDirection: 'column',
         alignItems: 'center',
-        zIndex:0
     },
     classSession:{
-        width:'95%'
+        width:'97%',
+        flex:1
     },
     cardBody:{
         paddingTop:0,
@@ -190,6 +199,10 @@ const styles = StyleSheet.create({
     },
     classDetails:{
         flex:3
+    },
+    detailItem:{
+        flexDirection:'row',
+        justifyContent:'flex-start'
     },
     attendancePercentage:{
         flex:1,

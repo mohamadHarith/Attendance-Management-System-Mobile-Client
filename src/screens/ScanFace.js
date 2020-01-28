@@ -1,7 +1,7 @@
 import React from 'react';
 import {Text, StyleSheet, View, ActivityIndicator, Vibration, ToastAndroid} from 'react-native';
 import { RNCamera } from 'react-native-camera';
-import {themeColor} from '../colorConstants'
+import {themeColor, fail, success2} from '../colorConstants'
 import {url} from '../server';
 
 const instructions = [
@@ -12,11 +12,15 @@ const instructions = [
     'Face captured',
     'Recognizing face...',
     'Face recocgnized. Updating attendance...',
+    'Multiple face detected. Make sure only one face is present.'
 ]
 
 const PATTERN = [0, 100, 100, 100];
 
 class ScanFace extends React.Component{
+    
+    _isMounted = false;
+    
     constructor(props){
         super(props);
         this.state = {
@@ -29,8 +33,7 @@ class ScanFace extends React.Component{
         }   
     }
 
-    handleFaceDetection = async (data)=>{
-        //console.log(data);        
+    handleFaceDetection = async (data)=>{       
         if(data.faces.length === 1 && !this.state.isPictureTaken){
             this.setState({isSingleFaceDetected: true});  
             this.setState({boundingBox: data.faces[0].bounds}, async ()=>{                
@@ -59,18 +62,13 @@ class ScanFace extends React.Component{
                      && boundingBoxAreaPercentage > minAreaThreshold 
                      && boundingBoxAreaPercentage < maxAreaThreshold){
                         this.setState({isFaceAligned: true});
-                        //console.log('im here');
                         const options = { quality: 1, base64: true, pauseAfterCapture: true, width: 600, mirrorImage: true};
                         if(!this.state.isPictureTaken && this.state.isSingleFaceDetected && this.state.isFaceAligned){                            
                             await this.setState({isPictureTaken: true, progressIndicator:instructions[4]}, async ()=>{
                                 const data = await this.camera.takePictureAsync(options);
-                                //console.log('Cache path: ', data.uri); 
-                                //this.props.handleScanFace(data.uri);
                                 this.handleScanFace(data.uri);
                                 this.setState({progressIndicator:instructions[5]});
-                            });  
-                            
-                                                   
+                            });                       
                         }
                 }
                 else if(boundingBoxAreaPercentage> maxAreaThreshold){this.setState({progressIndicator:instructions[2], isFaceAligned: false})}
@@ -84,10 +82,12 @@ class ScanFace extends React.Component{
         else if(!this.state.isPictureTaken){
             this.setState({isSingleFaceDetected: false, isFaceAligned: false, progressIndicator:instructions[0]});
         }
+        else if(!this.state.isPictureTaken && data.faces.length > 1){
+            this.setState({isSingleFaceDetected: false, isFaceAligned: false, progressIndicator:instructions[7]});
+        }
       }
 
-handleScanFace = async(uri)=>{
-        console.log(uri);
+    handleScanFace = async(uri)=>{
         const formData = new FormData();
         formData.append('studentID', this.state.studentID);
         formData.append('scanFaceImage', {
@@ -104,15 +104,14 @@ handleScanFace = async(uri)=>{
           })
           .then((res)=>{
               if(res.status == 200){
-                //this.props.navigation.navigate('main', {studentID: this.state.studentID});
                 res.json().then((data)=>{
                     //face recognized
-                    if(data.didFaceMatch){
+                    if(data.didFaceMatch && this._isMounted){
                         this.setState({progressIndicator:instructions[6]});
                         Vibration.vibrate(PATTERN);
                         this.props.handleScanFace(true);
                     }
-                    else{
+                    else if(!data.didFaceMatch && this._isMounted){
                         this.props.handleScanFace(false);
                         ToastAndroid.showWithGravityAndOffset(
                             'Face could not be recognized',
@@ -125,20 +124,13 @@ handleScanFace = async(uri)=>{
                 })
               }
               else{
-                this.props.handleScanFace(false);
-                ToastAndroid.showWithGravityAndOffset(
-                  'Something went wrong. Please try again.',
-                  ToastAndroid.LONG,
-                  ToastAndroid.BOTTOM,
-                  25,
-                  50,
-                );
+                throw new Error('Something went wrong. Please try again.')
               }
           })
           .catch((error)=>{
                 this.props.handleScanFace(false);
                 ToastAndroid.showWithGravityAndOffset(
-                  'Something went wrong. Please try again.',
+                  error.message,
                   ToastAndroid.LONG,
                   ToastAndroid.BOTTOM,
                   25,
@@ -148,11 +140,18 @@ handleScanFace = async(uri)=>{
         
     }
 
+    componentDidMount(){
+        this._isMounted = true;
+    }
 
+    componentWillUnmount(){
+        this._isMounted = false;
+    }
+    
     render(){
         return(
             <View style={styles.mainContainer}>
-                <View style={{...styles.cameraContainer, borderColor: this.state.isPictureTaken ? '#90ee90' : 'red'}}>
+                <View style={{...styles.cameraContainer, borderColor: this.state.isPictureTaken ? success2 : fail}}>
                                 <RNCamera
                                     ref={ref => {
                                         this.camera = ref;
@@ -170,9 +169,9 @@ handleScanFace = async(uri)=>{
                                     faceDetectionMode={RNCamera.Constants.FaceDetection.Mode.accurate}
                                     onFacesDetected={(data)=>{this.handleFaceDetection(data)}}
                                 >
+                                 <View style={styles.canvasCenter}></View>
                                     {this.state.isSingleFaceDetected?(
                                         <View>
-                                            <View style={styles.canvasCenter}></View>
                                             <View 
                                                 style={{
                                                     ...styles.boundingBox, 

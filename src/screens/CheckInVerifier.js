@@ -3,27 +3,35 @@ import {StyleSheet, View, ToastAndroid} from 'react-native';
 import {Container, Header, Left, Right, Body, Button, Title, Text, Card, CardItem, Icon} from 'native-base';
 import ScanBeacon from './ScanBeacon';
 import ScanFace from './ScanFace';
-import {themeColor} from '../colorConstants';
+import {themeColor, fail, success} from '../colorConstants';
 import {url} from '../server';
 import LoadingIndicator from '../components/LoadingIndicator'
 
 //mock state data for unit test
 // { studentID: '1151101633',
 // classSession:        
-//  { Class_Session_ID: 6,
-//    Class_ID: 3,      
-//    Start_Time: '12:00am',
-//    End_Time: '11:59pm',
-//    Subject_Name: 'SOFT. VERIFICATION & VALID.',
-//    Type: 'Lecture',  
-//    Section: 'TC02',  
-//    Venue_ID: 'CQCR3004',
-//    Venue_Name: 'FCI CLASSROOM' },
+//{
+//     Class_Session_ID: 11,
+//     Class_ID: 12,
+//     Start_Time: "12:00am",
+//     End_Time: "11:59pm",
+//     Subject_Name: "Demo To Mr Ban",
+//     Type: "Meeting",
+//     Section: "MT06",
+//     Venue_ID: "CQCR3004",
+//     Venue_Name: "FCI CLASSROOM",
+//     attendancePercenatage: {
+//     numberOfClassSessionsAttended: "0",
+//     numberOfTotalClassSessions: "2",
+//     percentage: 0
+//}
 // isScanBeacon: false, 
 // isScanFace: true,    
 // isBeaconDetected: true,
 // isPermissionGranted: true,
 // attendanceSetSuccessfully: false }
+
+
 
 class CheckInVerifier extends React.Component{
     
@@ -137,8 +145,8 @@ class CheckInVerifier extends React.Component{
                 }).then((res)=>{
                     if(res.status == 200){
                         res.json().then((data)=>{
-                            if(data.querySuccessful){
-                                if(this._isMounted){
+                            if(data.querySuccessful && this._isMounted){
+                               
                                     this.setState({attendanceSetSuccessfully:true});
                                     this.props.navigation.pop();
                                     ToastAndroid.showWithGravityAndOffset(
@@ -148,7 +156,7 @@ class CheckInVerifier extends React.Component{
                                         25,
                                         50,
                                     );
-                                }
+                                
                             }
                         })
                     }
@@ -222,18 +230,40 @@ class CheckInVerifier extends React.Component{
 
                     <View style={styles.classSession}>
                         <Card>
-                            <CardItem>
+                            <CardItem style={{paddingBottom:0}}>
                                 <Text style={{fontSize:18, fontWeight: 'bold'}}>{this.state.classSession.Subject_Name}</Text>
                              </CardItem>
                              <CardItem style={styles.cardBody}>
                                 <View style={styles.classSessionDetails}>
-                                    <Text style={{color:'grey'}}>{`${this.state.classSession.Type} - ${this.state.classSession.Section}`}</Text>
-                                    <Text style={{color:'grey'}}>{`${this.state.classSession.Start_Time} - ${this.state.classSession.End_Time}`}</Text> 
-                                    <Text style={{color:'grey'}}>{`${this.state.classSession.Venue_Name} - ${this.state.classSession.Venue_ID}`}</Text>
-                                    <Text style={{color:'grey'}}></Text>
+                                    <View style={styles.detailItem}>
+                                        <Icon name='book' style={{fontSize:20, color:'grey', textAlign:'center'}} />
+                                        <Text style={{color:'grey', fontSize:15}}>
+                                             {`${this.state.classSession.Type} - ${this.state.classSession.Section}`}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.detailItem}>
+                                        <Icon name='time' style={{fontSize:20, color:'grey', textAlign:'center'}} />
+                                         <Text style={{color:'grey', fontSize:15}}>
+                                               {`${this.state.classSession.Start_Time} - ${this.state.classSession.End_Time}`}
+                                           </Text>
+                                    </View>
+                                    <View style={styles.detailItem}>
+                                         <Icon name='locate' style={{fontSize:20, color:'grey', textAlign:'center'}} />
+                                          <Text style={{color:'grey', fontSize:15}}>
+                                                 {`${this.state.classSession.Venue_Name} - ${this.state.classSession.Venue_ID}`}
+                                           </Text> 
+                                    </View>
+                                    <View style={styles.detailItem}>
+                                        <Icon name='pie' style={{fontSize:20, color:'grey', textAlign:'center'}} />
+                                         <Text style={{color:'grey', fontSize:15}}>
+                                                {`${this.state.classSession.attendancePercenatage.numberOfClassSessionsAttended} of ${this.state.classSession.attendancePercenatage.numberOfTotalClassSessions} class sessions attended`}
+                                          </Text>
+                                    </View>
                                 </View>
                                 <View style={styles.attendancePercentage}>
-                                    <Text style={{textAlign:'center', fontSize: 30, fontWeight:'bold', color:'red'}}></Text>
+                                         <Text style={{textAlign:'center', fontSize: 30, fontWeight:'bold', color:this.state.classSession.percentage > 0 ? success : fail}}>
+                                             {`${this.state.classSession.attendancePercenatage.percentage} %`}
+                                        </Text>
                                 </View>                                      
                              </CardItem>
                         </Card>
@@ -310,6 +340,10 @@ const styles = StyleSheet.create({
     },
     classSessionDetails:{
         flex:3
+    },
+    detailItem:{
+        flexDirection:'row',
+        justifyContent:'flex-start'
     },
     attendancePercentage:{
         flex:1
