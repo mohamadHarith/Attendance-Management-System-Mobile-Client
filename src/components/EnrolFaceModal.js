@@ -36,8 +36,7 @@ class EnrolFaceModal extends React.Component {
     handleFaceDetection = async (data)=>{
         if(data.faces.length === 1 && !this.state.isPictureTaken && this._isMounted){
             this.setState({isSingleFaceDetected: true});
-            this.setState({boundingBox: data.faces[0].bounds}, async ()=>{              
-                                
+            this.setState({boundingBox: data.faces[0].bounds}, async ()=>{                            
                 const canvasCenter = {
                     x: 120,
                     y: 120
@@ -45,19 +44,17 @@ class EnrolFaceModal extends React.Component {
                  const boundingBoxCenter = {
                     x: (this.state.boundingBox.origin.x + this.state.boundingBox.size.width/2),
                     y: (this.state.boundingBox.origin.y + this.state.boundingBox.size.height/2)
-                }
-                
+                }                
                 const boundingBoxCenterDistance = Math.sqrt(
                     Math.pow((canvasCenter.x - boundingBoxCenter.x), 2) 
                     + Math.pow((canvasCenter.y - boundingBoxCenter.y), 2)
                 );                
                 const boundingBoxAreaPercentage = (this.state.boundingBox.size.width*this.state.boundingBox.size.height)/(240*240);
-
                 //thresholds
                 const maxDistanceThreshold = 5;
                 const minAreaThreshold = 0.3;
                 const maxAreaThreshold = 0.4;
-
+                //face is aligned to the center of the frame and the face is not too close or to far away from the frame
                 if(boundingBoxCenterDistance < maxDistanceThreshold
                      && boundingBoxAreaPercentage > minAreaThreshold 
                      && boundingBoxAreaPercentage < maxAreaThreshold){
@@ -65,14 +62,17 @@ class EnrolFaceModal extends React.Component {
                         if(!this.state.isPictureTaken && this.state.isSingleFaceDetected && this.state.isFaceAligned){
                             this.setState({isPictureTaken:true, progressIndicator:instructions[4]}, async ()=>{
                               const options = { quality: 1, base64: true, pauseAfterCapture: true, width: 600, mirrorImage: true};
-                              const data = await this.camera.takePictureAsync(options); 
+                              const data = await this.camera.takePictureAsync(options);//capture image 
                               this.props.navigation.state.params.setUri(this.state.id, data.base64);  
                               this.handleClose();  
                             });
                           }
                 }
+                //face is too close to the frame
                 else if(boundingBoxAreaPercentage> maxAreaThreshold){this.setState({progressIndicator:instructions[2], isFaceAligned: false})}
+                //face is too far away from the from
                 else if(boundingBoxAreaPercentage< minAreaThreshold){this.setState({progressIndicator:instructions[3], isFaceAligned: false})} 
+                //face is not alligned to the center of the frame
                 else if(boundingBoxCenterDistance> maxDistanceThreshold){this.setState({progressIndicator:instructions[1], isFaceAligned: false})}             
                 else{
                     this.setState({isFaceAligned: false, progressIndicator:instructions[0]});
@@ -82,7 +82,7 @@ class EnrolFaceModal extends React.Component {
         else if(!this.state.isPictureTaken && this._isMounted){
             this.setState({isSingleFaceDetected: false, isFaceAligned: false, progressIndicator:instructions[0]});
         } 
-      }
+    }
 
     componentDidMount(){
         this._isMounted = true;
@@ -104,7 +104,9 @@ class EnrolFaceModal extends React.Component {
                         </View>
                    </TouchableWithoutFeedback>
                     <View style={styles.textContainer}>
-                        <Text style={{fontFamily:'Roboto', color:'grey', textAlign:'center'}}>Position your phone parallel to your face</Text>
+                        <Text style={{fontFamily:'Roboto', color:'grey', textAlign:'center'}}>
+                            Position your phone parallel to your face. Please make sure the background is not too bright or messy and your forehead and eyes are visible.
+                        </Text>
                     </View>
                     <View style={styles.cameraSuperContainer}>
                         <View style={{...styles.cameraContainer, borderColor: this.state.isSingleFaceDetected ? success2 : fail}}>

@@ -9,12 +9,14 @@ import {
   Body,
   Title,
   Button,
-  Text
+  Text,
+  Content
 } from 'native-base';
 
 import {StyleSheet,
   View,
-  ToastAndroid
+  ToastAndroid,
+  Image
 } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import LoadingIndicator from '../components/LoadingIndicator'
@@ -60,7 +62,7 @@ class Login extends React.Component {
         }
       }).catch((error)=>{
         if(this._isMounted){
-          this.setState({isLoaded:true});
+          this.setState({isLoaded:true, studentID:'', password:''});
           ToastAndroid.showWithGravityAndOffset(
             error.message,
              ToastAndroid.LONG,
@@ -72,7 +74,7 @@ class Login extends React.Component {
       })
       setTimeout(()=>{           
            if(this._isMounted && !this.state.isLoaded){
-            this.setState({isLoaded:true});    
+            this.setState({isLoaded:true, studentID:'', password:''});    
             ToastAndroid.showWithGravityAndOffset(
                     'Network request timeout',
                     ToastAndroid.LONG,
@@ -87,6 +89,7 @@ class Login extends React.Component {
      }
     }catch(error){
       if(this._isMounted){
+        this.setState({isLoaded:true, studentID:'', password:''})
         ToastAndroid.showWithGravityAndOffset(
           error.message,
            ToastAndroid.LONG,
@@ -119,8 +122,15 @@ class Login extends React.Component {
                 <Title style={styles.headerTitle}>MMU Attendance</Title>
               </Body>
             </Header>        
-        
-          <View style={styles.mainContainer}>
+            <Content>
+            <View style={styles.mainContainer}>
+            <View style={styles.logoContainer}>
+              <Image 
+                  source={require('../images/logo-mmu.png')} 
+                  style={{width:250, height:100}}
+                  resizeMode='contain'
+                />
+            </View>
             <Form style={styles.formStyle}>
               <Item floatingLabel>
                 <Label style={{color:'grey'}}>Student ID</Label>
@@ -152,7 +162,8 @@ class Login extends React.Component {
                  </Button>
               </View>
             </Form> 
-          </View>            
+            </View>
+            </Content>        
           </View>
         ):(
           <LoadingIndicator/>
@@ -181,17 +192,28 @@ const styles = StyleSheet.create({
   mainContainer:{
     flex:1,
     flexDirection:'column',
-    justifyContent:'center',
-    alignItems:'center'
+    alignItems:'center',
+    marginTop:50
 
+  },
+
+  logoContainer:{
+    width:350, 
+    height:105,
+    flexDirection:'row',
+    justifyContent:'center',
+    // backgroundColor:'yellow'
+    
   },
 
   formStyle:{
     width:'90%',
-    padding:10
+    padding:10,
+    marginTop:30
   },
 
   buttonContainer:{
+    marginTop:30,
     flexDirection: 'column',
     alignItems: 'center',
   }

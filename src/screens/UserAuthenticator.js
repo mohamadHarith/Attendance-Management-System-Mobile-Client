@@ -16,19 +16,30 @@ class UserAuthenticator extends React.Component{
         }
     }
     
-    isValidUser = async()=>{
-        const userID = await AsyncStorage.getItem('studentID');
-        const userName = await AsyncStorage.getItem('studentName');
+    isValidUser = async()=>{        
+       try{
+            const userID = await AsyncStorage.getItem('studentID');
+            const userName = await AsyncStorage.getItem('studentName');
 
-        if(userID != null && userName != null && this._isMounted){
-            this.setState({studentID: userID, studentName: userName});
-            this.hasEnrolledFace();
-        }
-        else{
-            if(this._isMounted){
-                this.props.navigation.navigate('logIn');
+            if(userID != null && userName != null && this._isMounted){
+                this.setState({studentID: userID, studentName: userName});
+                this.hasEnrolledFace();
             }
-        }
+            else{
+                if(this._isMounted){
+                    this.props.navigation.navigate('logIn');
+                }
+            }
+       }
+       catch(error){
+            ToastAndroid.showWithGravityAndOffset(
+                error.message,
+                ToastAndroid.LONG,
+                ToastAndroid.BOTTOM,
+                25,
+                50,
+            );
+       }
     }
 
     hasEnrolledFace = async ()=>{

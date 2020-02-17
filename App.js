@@ -1,5 +1,6 @@
 import {createSwitchNavigator, createAppContainer} from 'react-navigation';
 import { createDrawerNavigator } from 'react-navigation-drawer';
+import { createStackNavigator } from 'react-navigation-stack';
 
 import UserAuthencticator from './src/screens/UserAuthenticator'
 import CheckInVerifier from './src/screens/CheckInVerifier'
@@ -11,7 +12,7 @@ import ClassSchedule from './src/screens/ClassSchedule';
 import AttendancePercentage from './src/screens/AttendancePercentage';
 import AttendanceDetails from './src/screens/AttendanceDetails';
 import SideBar from './src/components/SideBar';
-import { createStackNavigator } from 'react-navigation-stack';
+
 
 const AttendancePercentageStackNavigator = createStackNavigator({
   attendanceOverview: AttendancePercentage,
@@ -54,6 +55,8 @@ const App =  createSwitchNavigator({
   logIn: LogIn,
   enrolFace: EnrolFaceStackNavigator,
   main: mainDrawerNavigator
+},{
+  initialRouteName:'authUser'
 });
 
 export default createAppContainer(App);

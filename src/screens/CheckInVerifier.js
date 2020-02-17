@@ -60,7 +60,7 @@ class CheckInVerifier extends React.Component{
             body: JSON.stringify({
                 studentID: this.state.studentID,
                 classSessionID: this.state.classSession.Class_Session_ID
-            })
+            }) 
         }).then((res)=>{
             if(res.status == 200){
                 res.json().then((data)=>{

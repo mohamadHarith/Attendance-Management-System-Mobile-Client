@@ -132,7 +132,7 @@ class ClassSchedule extends React.Component{
                     <></>
                 )}
                 {(this.state.isDataLoaded && !this.state.classData.length>0)?(
-                    <NativeText>No schedule data found for this week.</NativeText>
+                    <NativeText>No schedule data found for this week</NativeText>
                 ):(
                     <></>
                 )}

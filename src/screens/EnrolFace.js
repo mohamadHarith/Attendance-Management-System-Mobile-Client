@@ -121,21 +121,21 @@ export default class EnrolFace extends Component {
               );
           }
         });
-        setTimeout(()=>{
-            if(this.state.isLoading){
-              if(this._isMounted){
-                    ToastAndroid.showWithGravityAndOffset(
-                        'Network request timeout. Please try again.',
-                        ToastAndroid.LONG,
-                        ToastAndroid.BOTTOM,
-                        25,
-                        50,
-                    );
-                    this.props.navigation.navigate('logIn');
-              }
+        // setTimeout(()=>{
+        //     if(this.state.isLoading){
+        //       if(this._isMounted){
+        //             ToastAndroid.showWithGravityAndOffset(
+        //                 'Network request timeout. Please try again.',
+        //                 ToastAndroid.LONG,
+        //                 ToastAndroid.BOTTOM,
+        //                 25,
+        //                 50,
+        //             );
+        //             this.props.navigation.navigate('logIn');
+        //       }
                 
-            }
-        }, 120000)
+        //     }
+        // }, 120000)
       }
       else{
         throw new Error('Something went wrong')

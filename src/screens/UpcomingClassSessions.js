@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, TouchableNativeFeedback, View, FlatList, ToastAndroid, Text as NativeText} from 'react-native';
+import {StyleSheet, TouchableNativeFeedback, View, FlatList, ToastAndroid, Text as NativeText, StatusBar} from 'react-native';
 import {Container, Header, Body, Title, Left, Text, Icon, Card, CardItem, Subtitle} from 'native-base';
 import LoadingIndicator from '../components/LoadingIndicator'
 import {themeColor, themeLight} from '../colorConstants';
@@ -141,6 +141,7 @@ class UpcomingClasseSesisons extends React.Component{
         return(
             <Container>
                 <Header androidStatusBarColor={themeColor} style={styles.header}>
+                <StatusBar barStyle={themeColor}/>
                     <Left>
                        <TouchableNativeFeedback onPress={()=>{this.props.navigation.openDrawer()}}>
                             <Icon name='menu' style={{color:'white'}}></Icon>
@@ -180,7 +181,7 @@ class UpcomingClasseSesisons extends React.Component{
                                         <NativeText>No upcoming classes. Pull to refresh.</NativeText>
                                     );
                                 }}
-                                renderItem={(item)=>{
+                                renderItem={(item, index)=>{
                                     return(
                                         <Card>
                                             <CardItem style={{paddingBottom:0}}>
@@ -226,7 +227,7 @@ class UpcomingClasseSesisons extends React.Component{
                                         </Card>
                                     );
                                 }}
-                                keyExtractor={item => toString(item.Class_Session_ID)}
+                                keyExtractor={(item, index) => index.toString()}
                             />
                         ):(
                             <LoadingIndicator/>

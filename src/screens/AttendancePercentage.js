@@ -4,6 +4,7 @@ import {Container, Header, Left, Right, Body, Button, Title, Text, Card, CardIte
 import {themeColor, success, fail} from '../colorConstants';
 import {url} from '../server';
 import LoadingIndicator from '../components/LoadingIndicator';
+import ProgressCircle from 'react-native-progress-circle';
 
 //mock data for unit tests
 // { studentID: '1151101633',
@@ -159,9 +160,19 @@ class AttendancePercentage extends React.Component{
                                                 </View>
                                             </View>  
                                             <View style={styles.attendancePercentage}>
-                                            <Text style={{textAlign:'center', fontSize: 30, fontWeight:'bold', color: item.attendancePercentage<80 ? fail : success}}>
+                                            {/* <Text style={{textAlign:'center', fontSize: 30, fontWeight:'bold', color: item.attendancePercentage<80 ? fail : success}}>
                                                 {`${item.attendancePercentage}%`}
-                                            </Text>
+                                            </Text> */}
+                                                 <ProgressCircle
+                                                    percent={item.attendancePercentage}
+                                                    radius={28}
+                                                    borderWidth={4}
+                                                    color= {item.attendancePercentage<80 ? fail : success}
+                                                    shadowColor='grey'
+                                                    bgColor='white'
+                                                >
+                                                    <Text style={{ fontSize: 15, color:'grey'}}>{`${item.attendancePercentage}%`}</Text>
+                                                </ProgressCircle>
                                             </View>                                      
                                         </CardItem>
                                     </Card>
@@ -206,6 +217,9 @@ const styles = StyleSheet.create({
     },
     attendancePercentage:{
         flex:1,
+        flexDirection:'row',
+        justifyContent:'flex-end'
+
     }
 });
 
